@@ -1,0 +1,25 @@
+{
+    "extends": "recommended",
+    "formatting": {
+        "insertSpaces": true,
+        "tabSize": 4
+    },
+    "rules": {
+        "ClassEndsWithBlankLine": "off",
+        "ClassStartsWithBlankLine": "off",
+        "CompileStatic": "off",
+        "DuplicateStringLiteral": {
+            "enabled": false
+        },
+        "FieldTypeRequired": "off",
+        "ImplicitReturnStatement": "off",
+        "Instanceof": "off",
+        "MethodParameterTypeRequired": "off",
+        "MethodReturnTypeRequired": "off",
+        "NestedBlockDepth": {
+            "enabled": false
+        },
+        "NoDef": "off",
+        "VariableTypeRequired": "off"
+    }
+}
