@@ -19,6 +19,7 @@ class SeedJobs {
 
     static final String JOB_NAME = 'master_seed'
     static final String SCRIPT = 'jobs/master_seed/job.groovy'
+    static final String CLASSPATH = 'src/main/groovy'
     static final String BRANCH = '*/master'
     static final int QUIET_PERIOD_SECONDS = 15
 
@@ -35,6 +36,7 @@ class SeedJobs {
         def builder = new ExecuteDslScripts()
         builder.with {
             targets = SCRIPT
+            additionalClasspath = CLASSPATH
             useScriptText = false
             ignoreExisting = false
             ignoreMissingFiles = false
