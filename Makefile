@@ -23,10 +23,16 @@ test: $(GROOVY_JAR)
 verify:
 	./scripts/verify.sh
 
+# what the image is carrying: mostly upstream debian and the git-lfs binary the
+# jenkins image bundles, neither of which this repo builds
+scan:
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v trivycache:/root/.cache \
+	  aquasec/trivy:latest image --scanners vuln --severity CRITICAL,HIGH --quiet $(IMAGE)
+
 lint:
 	npx -y npm-groovy-lint "init.groovy.d/*.groovy" "src/**/*.groovy" "scripts/*.groovy"
 
 lint_fix:
 	npx -y npm-groovy-lint --fix "init.groovy.d/*.groovy" "src/**/*.groovy" "scripts/*.groovy"
 
-.PHONY: build push run test verify lint lint_fix
+.PHONY: build push run test verify scan lint lint_fix

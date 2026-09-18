@@ -5,7 +5,12 @@ ENV JAVA_OPTS="-Djenkins.install.runSetupWizard=false"
 # optional internal CAs: drop *.crt files into certs/
 USER root
 COPY certs/ /usr/local/share/ca-certificates/
-RUN update-ca-certificates && \
+# the base image ships whatever debian had at its build time, so pick up the
+# security updates published since. make scan shows what is left
+RUN apt-get update && \
+    apt-get -y upgrade && \
+    rm -rf /var/lib/apt/lists/* && \
+    update-ca-certificates && \
     for crt in /usr/local/share/ca-certificates/*.crt; do \
       [ -e "$crt" ] || continue; \
       keytool -importcert -cacerts -storepass changeit -noprompt \
