@@ -5,9 +5,11 @@ blueocean:1.27.26
 blueocean-jira:1.27.26
 build-timeout:1.41
 cloudbees-bitbucket-branch-source:937.3.10
+cloudbees-folder:6.1106.v3a_d9a_6d2465e
 copyartifact:795.ve8e151429b_27
 credentials:1511.v2e3cb_0008ef0
 credentials-binding:728.v902a_273b_8947
+dependency-check-jenkins-plugin:5.6.5
 docker-workflow:653.v2f2c08eff0ec
 email-ext:2038.v7b_8817a_499d9
 git:5.10.1
@@ -32,8 +34,10 @@ pipeline-utility-steps:3.810.va_7672d206740
 role-strategy:898.vc050ed2424ca_
 s3:521.ve80885ef9718
 scoring-load-balancer:233.267.v0fd8d1f1a_7cf
+sonar:2.19.0
 ssh-slaves:3.1097.v868116049892
 subversion:1327.vc36e0019a_653
 timestamper:1.30
+warnings-ng:13.10266.vefe0a_717b_e11
 workflow-aggregator:608.v67378e9d3db_1
 ws-cleanup:0.49

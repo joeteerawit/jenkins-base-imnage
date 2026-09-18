@@ -62,22 +62,49 @@ echo "==> checking configured state"
 post --data-urlencode "script@${HERE}/verify.groovy" "$URL/scriptText" | tee /tmp/verify.out
 grep -q VERIFY_STATE_OK /tmp/verify.out || { echo "!! state check failed"; exit 1; }
 
-echo "==> waiting for the auto-triggered master_seed"
-for _ in $(seq 1 60); do
-  result=$(curl -s -u "$auth" "$URL/job/master_seed/1/api/json" 2>/dev/null |
-    python3 -c 'import sys,json;print(json.load(sys.stdin).get("result") or "")' 2>/dev/null || true)
-  [ -n "${result:-}" ] && break
-  sleep 2
-done
-if [ "${result:-}" != SUCCESS ]; then
-  echo "!! master_seed finished ${result:-<no build>}"
-  curl -s -u "$auth" "$URL/job/master_seed/1/consoleText" | tail -30
-  exit 1
-fi
+# the seed jobs chain: master_seed generates each team's seed_job and queues it,
+# that one generates the team's pipelines
+await_build() {
+  local job=$1 path=$2 result=
+  for _ in $(seq 1 60); do
+    result=$(curl -s -u "$auth" "${URL}/${path}/1/api/json" 2>/dev/null |
+      python3 -c 'import sys,json;print(json.load(sys.stdin).get("result") or "")' 2>/dev/null || true)
+    [ -n "${result:-}" ] && break
+    sleep 2
+  done
+  if [ "${result:-}" != SUCCESS ]; then
+    echo "!! ${job} finished ${result:-<no build>}"
+    curl -s -u "$auth" "${URL}/${path}/1/consoleText" | tail -40
+    exit 1
+  fi
+}
 
-echo "==> checking generated jobs"
+echo "==> waiting for the auto-triggered master_seed"
+await_build master_seed job/master_seed
+
+echo "==> checking the team seed job"
 generated=$(curl -s -u "$auth" "$URL/job/example/job/seed_job/api/json" |
   python3 -c 'import sys,json;print(json.load(sys.stdin)["fullName"])')
 [ "$generated" = "example/seed_job" ] || { echo "!! seed job not generated"; exit 1; }
+await_build "$generated" job/example/job/seed_job
 
-echo "PASS: bootstrap configured jenkins and master_seed generated ${generated}"
+echo "==> checking the generated pipeline"
+pipeline=job/example/job/spring-boot-demo
+name=$(curl -s -u "$auth" "$URL/${pipeline}/api/json" |
+  python3 -c 'import sys,json;print(json.load(sys.stdin)["fullName"])' 2>/dev/null || true)
+[ "$name" = "example/spring-boot-demo" ] || { echo "!! pipeline job not generated"; exit 1; }
+
+# the job dsl happily generates a job whose script never rendered, so read the
+# pipeline back out of config.xml, unescaped, and look at what it actually says
+script=$(curl -s -u "$auth" "$URL/${pipeline}/config.xml" |
+  python3 -c 'import sys,html,re;x=sys.stdin.read();m=re.search(r"<script>(.*)</script>",x,re.S);print(html.unescape(m.group(1)) if m else "")')
+for expected in "@Library('pipeline-library@master')" \
+                "load('jenkinsfile/templates/java-maven.groovy')" \
+                "sonarProjectKey: 'example-spring-boot-demo'"; do
+  case $script in
+    *"$expected"*) ;;
+    *) echo "!! generated pipeline is missing: $expected"; echo "$script" | tail -30; exit 1 ;;
+  esac
+done
+
+echo "PASS: bootstrap configured jenkins, and the seed chain generated ${name}"
